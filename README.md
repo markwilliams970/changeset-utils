@@ -1,6 +1,14 @@
 changeset-utils
 ===============
 
+Some Simple SCM and Changeset Utilities for Rally.
+
+Requirements:
+
+ - Ruby 1.9.3 or higher
+ - rally_api 1.0 or higher
+
+
 clean_changeset.rb
 ==========================
 
