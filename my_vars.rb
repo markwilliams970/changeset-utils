@@ -1,0 +1,8 @@
+$my_base_url                     = "https://rally1.rallydev.com/slm"
+$my_username                     = "user@company.com"
+$my_password                     = "topsecret"
+$my_workspace                    = "My Workspace"
+$my_project                      = "My Project"
+$my_author                       = "user@company.com.com"
+$my_scm_url                      = "https://svnrepo.company.com:8080"
+$my_scm_repo                     = "SVNRepo"
