@@ -25,6 +25,7 @@ Some handy Javascript Apps, and some Ruby Scripts to help work with Rally Change
 * Script Requirements:
  * Ruby 1.9.3 or higher
  * rally_api 1.0 or higher
+
 ## License
 
 These tools are released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
