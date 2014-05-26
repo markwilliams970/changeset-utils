@@ -548,6 +548,7 @@ Ext.define('ChangesetMover', {
         Ext.create('Rally.data.wsapi.Store', {
             model: 'Changeset',
             autoLoad: true,
+            limit: Infinity,
             fetch: ['ObjectID', 'Name', 'Revision', 'CommitTimestamp', 'Author', 'Artifacts', 'Message'],
             filters: [
                 {
@@ -693,7 +694,7 @@ Ext.define('ChangesetMover', {
 
         var gridStore = Ext.create('Rally.data.custom.Store', {
             data: changesets,
-            pageSize: 1000,
+            pageSize: 50,
             remoteSort: false
         });
 
