@@ -39,6 +39,12 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
 
     /**
      * @cfg {String}
+     * Current commit message
+     */
+    targetFormattedID: '',
+
+    /**
+     * @cfg {String}
      * The label for the left button
      */
     confirmLabel: 'Continue',
@@ -54,6 +60,12 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
             xtype: 'component',
             itemId: 'confirmMsg',
             cls: 'confirmMessage'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'Target FormattedID:',
+            itemId: 'targetFmtId',
+            cls: 'targetFormattedID'
         },
         {
             xtype: 'rallytextfield',
@@ -105,6 +117,10 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
         if (config.currentCommitMessage) {
             this.currentCommitMessage = config.currentCommitMessage;
         }
+
+        if (config.targetFormattedID) {
+            this.targetFormattedID = config.targetFormattedID;
+        }
     },
 
     initComponent: function() {
@@ -133,10 +149,17 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
         } else {
             this.down('#confirmMsg').hide();
         }
+
         if(this.currentCommitMessage) {
             this.down('#currentCommitMsg').setValue(this.currentCommitMessage);
         } else {
             this.down('#currentCommitMsg').hide();
+        }
+
+        if(this.targetFormattedID) {
+            this.down('#targetFmtId').setValue(this.targetFormattedID);
+        } else {
+            this.down('#targetFmtId').hide();
         }
     },
 

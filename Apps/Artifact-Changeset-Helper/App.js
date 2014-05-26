@@ -541,6 +541,7 @@ Ext.define('ArtifactChangesetMover', {
 
         me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
             message: message,
+            targetFormattedID: targetartifact.get('FormattedID'),
             currentCommitMessage: currentCommitMessage,
             confirmLabel: confirmLabel,
             listeners: {
