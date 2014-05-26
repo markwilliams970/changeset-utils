@@ -166,7 +166,7 @@
 
     _hydrateData: function(combobox, records) {
 
-        console.log('_hydrateData');
+        // console.log('_hydrateData');
 
         var me = this;
         me._selectedArtifact = records[0];
@@ -219,7 +219,7 @@
 
     _getArtifactChangesetCollection: function(scope) {
 
-        console.log('_getArtifactChangesetCollection');
+        // console.log('_getArtifactChangesetCollection');
 
         var me = scope;
         var artifact = me._selectedArtifact;
@@ -247,7 +247,7 @@
 
     _hydrateArtifactChangesets: function(artifact, scope) {
 
-        console.log('_hydrateArtifactChangesets');
+        // console.log('_hydrateArtifactChangesets');
 
         var deferred = Ext.create('Deft.Deferred');
         var me = scope;
@@ -274,7 +274,7 @@
     },
 
     _getHashLength: function(hash) {
-        console.log('_getHashLength');
+        // console.log('_getHashLength');
 
         var size = 0, key;
         for (key in hash) {
@@ -285,7 +285,7 @@
 
     _getChangesetArtifactsCollection: function(scope, type) {
 
-        console.log('_getChangesetArtifactsCollection');
+        // console.log('_getChangesetArtifactsCollection');
 
         var me = scope;
         var changesetsByChangesetOID = me._artifactChangesetsByChangesetOid;
@@ -315,7 +315,7 @@
         var me = scope;
         //changeset = changeset[0];
 
-        console.log('_hydrateChangesetArtifacts');
+        // console.log('_hydrateChangesetArtifacts');
 
         var deferred = Ext.create('Deft.Deferred');
 
@@ -354,7 +354,7 @@
 
     _makeGrids: function(scope) {
 
-        console.log('_makeGrids');
+        // console.log('_makeGrids');
         var me = scope;
         me._makeArtifactGrid(me);
 
@@ -362,7 +362,7 @@
 
     _makeArtifactGrid: function(scope) {
 
-        console.log('_makeArtifactGrid');
+        // console.log('_makeArtifactGrid');
 
         var me = scope;
 
@@ -400,7 +400,7 @@
 
     _makeChangesetGrid: function(scope) {
 
-        console.log('_makeChangesetGrid');
+        // console.log('_makeChangesetGrid');
 
         var me = scope;
 
@@ -521,7 +521,7 @@
 
     _selectTargetArtifactForChangesetMove: function(changesetrecord, scope) {
 
-        console.log('_selectTargetArtifactForChangesetMove');
+        // console.log('_selectTargetArtifactForChangesetMove');
         var me = scope;
 
         me._targetArtifactChooserDialog = Ext.create('Rally.ui.dialog.ChooserDialog', {
@@ -540,7 +540,7 @@
 
     _createMoveChangesetAttributesDialog: function(sourcechangeset, targetartifact, scope) {
 
-        console.log('_createMoveChangesetAttributesDialog');
+        // console.log('_createMoveChangesetAttributesDialog');
 
         var me = scope;
 
@@ -563,7 +563,7 @@
 
     _moveChangeset: function(sourcechangeset, targetartifact, newcommitmessage, scope) {
 
-        console.log('_moveChangeset');
+        // console.log('_moveChangeset');
 
         var me = scope;
         var changesetOID = sourcechangeset.ObjectID;
@@ -655,7 +655,7 @@
 
     _confirmDeleteChangeset: function(record, scope) {
 
-        console.log('_confirmDeleteChangeset');
+        // console.log('_confirmDeleteChangeset');
 
         var me = scope;
 
@@ -675,7 +675,7 @@
 
     _deleteChangeset: function(record, scope) {
 
-        console.log('_deleteChangeset');
+        // console.log('_deleteChangeset');
 
         var me = scope;
         var changesetOID = record.ObjectID;
