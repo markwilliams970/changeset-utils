@@ -380,6 +380,24 @@ Ext.define('ArtifactChangesetMover', {
                 },
                 {
                     text: 'Name', dataIndex: 'Name', flex: 1
+                },
+                {
+                    text: 'Create Changeset',
+                    renderer: function (value, model, record) {
+                        var id = Ext.id();
+                        Ext.defer(function () {
+                            Ext.widget('button', {
+                                renderTo: id,
+                                text: 'New Changeset',
+                                width: 120,
+                                handler: function () {
+                                    me._createChangesetDialog(record.data, me);
+                                }
+                            });
+                        }, 50);
+                        return Ext.String.format('<div id="{0}"></div>', id);
+                    },
+                    flex: 1
                 }
             ]
         });
@@ -387,6 +405,10 @@ Ext.define('ArtifactChangesetMover', {
         me.down('#gridContainer').add(me._artifactGrid);
         me._artifactGrid.reconfigure(gridStore);
         me._makeChangesetGrid(me);
+    },
+
+    _createChangesetDialog: function(artifact, scope) {
+        console.log('_createChangesetDialog');
     },
 
     _makeChangesetGrid: function(scope) {
