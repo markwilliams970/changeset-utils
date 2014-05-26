@@ -380,6 +380,8 @@ Ext.define('ArtifactChangesetHelper', {
 
         me.down('#gridContainer').add(me._artifactGrid);
         me._artifactGrid.reconfigure(gridStore);
+
+        // Now that we have the Artifact grid constructed, create a grid for its changesets
         me._makeChangesetGrid(me);
     },
 
@@ -392,7 +394,7 @@ Ext.define('ArtifactChangesetHelper', {
         var message = "Define New Changeset Attributes";
         var confirmLabel = "Create Changeset";
 
-        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
             message: message,
             targetFormattedID: artifact.get('FormattedID'),
             confirmLabel: confirmLabel,
@@ -477,6 +479,8 @@ Ext.define('ArtifactChangesetHelper', {
     },
 
     _missingRequiredData: function(scope) {
+
+        // console.log('_missingRequiredData');
 
         var me = this;
 
@@ -650,7 +654,7 @@ Ext.define('ArtifactChangesetHelper', {
         var confirmLabel = "Move Changeset";
         var currentCommitMessage = sourcechangeset.Message || '' ;
 
-        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
             message: message,
             targetFormattedID: targetartifact.get('FormattedID'),
             currentCommitMessage: currentCommitMessage,

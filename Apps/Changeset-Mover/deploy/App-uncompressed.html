@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Changeset Mover</title>
+
+    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc2/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define('ChangesetMover', {
+    extend: 'Rally.app.App',
+    componentCls: 'app',
+    items: [
+        {
+            xtype: 'container',
+            itemId: 'labelContainer',
+            html: 'Find Changesets With Commit Timestamps Between:',
+            padding: '10px'
+        },
+        {
+            xtype: 'container',
+            itemId: 'startDateTimeChooser',
+            flex: 1,
+            layout: 'hbox',
+            padding: '10px'
+        },
+        {
+            xtype: 'container',
+            itemId: 'endDateTimeChooser',
+            flex: 1,
+            layout: 'hbox',
+            padding: '10px'
+        },
+        {
+            xtype: 'container',
+            itemId: 'controlsContainer',
+            columnWidth: 1
+        },
+        {
+            xtype: 'container',
+            itemId: 'gridContainer',
+            columnWidth: 1
+        }
+    ],
+
+    _startDateString: null,
+    _endDateString: null,
+
+    _startHourString: '00',
+    _endHourString: '23',
+
+    _startMinuteString: '00',
+    _endMinuteString: '59',
+
+    _startHourCombobox: null,
+    _startMinuteCombobox: null,
+    _startDateTextField: null,
+    _startDateChooserDialog: null,
+
+    _endHourCombobox: null,
+    _endMinuteCombobox: null,
+    _endDateTextField: null,
+    _endDateChooserDialog: null,
+
+    _startDateIsInFutureDialog: null,
+    _startDateIsGTEndDateDialog: null,
+
+    _findChangesetsButton: null,
+
+    launch: function() {
+
+        var me = this;
+
+        // Initialize default values for start and end dates
+        me._initializeDefaultDates();
+
+        // Build date choosers
+        var startDateText =  me._startDateString;
+
+        this._startDateTextField = Ext.create('Rally.ui.TextField', {
+            fieldLabel: 'Start Date',
+            value: startDateText,
+            listeners: {
+                render: function() {
+                    this.getEl().on('mousedown', function(e, t, eOpts) {
+                        me._createStartDateChooserDialog();
+                    });
+                }
+            }
+        });
+
+        // Build date choosers
+        var endDateText = me._endDateString;
+
+        this._endDateTextField = Ext.create('Rally.ui.TextField', {
+            fieldLabel: 'End Date',
+            value: endDateText,
+            listeners: {
+                render: function() {
+                    this.getEl().on('mousedown', function(e, t, eOpts) {
+                        me._createEndDateChooserDialog();
+                    });
+                }
+            }
+        });
+
+        // Build Hour choosers
+        var hourData = [];
+
+        for (var i = 0; i <= 23; i++) {
+            var hourKeyAndValue = me._padIntegerToString(i, 2);
+            var record = {
+                "name": hourKeyAndValue,
+                "value": hourKeyAndValue
+            };
+            hourData.push(record);
+        }
+
+        var hourStore = Ext.create('Ext.data.Store', {
+            fields: ['name', 'value'],
+            data: hourData
+        });
+
+        this._startHourCombobox = Ext.create('Ext.form.ComboBox', {
+            fieldLabel:   'Start Hour:',
+            store:        hourStore,
+            queryMode:    'local',
+            displayField: 'name',
+            valueField:   'value',
+            value: hourStore.getAt(0).get('value'),
+            listeners: {
+                scope: this,
+                'select': function(combobox, records) {
+                    me._startHourString = records[0].get('value');
+                }
+            }
+        });
+
+        this._endHourCombobox = Ext.create('Ext.form.ComboBox', {
+            fieldLabel:   'End Hour:',
+            store:        hourStore,
+            queryMode:    'local',
+            displayField: 'name',
+            valueField:   'value',
+            value: hourStore.getAt(23).get('value'),
+            listeners: {
+                scope: this,
+                'select': function(combobox, records) {
+                    me._endHourString = records[0].get('value');
+                }
+            }
+        });
+
+        // Build Minute chooser
+        var minuteData = [];
+
+        for (i = 0; i <= 59; i ++) {
+            var minuteKeyAndValue = me._padIntegerToString(i, 2);
+            var minuteRecord = {
+                "name": minuteKeyAndValue,
+                "value": minuteKeyAndValue
+            };
+            minuteData.push(minuteRecord);
+        }
+
+        var minuteStore = Ext.create('Ext.data.Store', {
+            fields: ['name', 'value'],
+            data: minuteData
+        });
+
+        this._startMinuteCombobox = Ext.create('Ext.form.ComboBox', {
+            fieldLabel:   "Start Minute:",
+            store:        minuteStore,
+            queryMode:    'local',
+            displayField: 'name',
+            valueField:   'value',
+            value: minuteStore.getAt(0).get('value'),
+            listeners: {
+                scope: this,
+                'select': function(combobox, records) {
+                    me._startMinuteString = records[0].getValue();
+                }
+            }
+        });
+
+        this._endMinuteCombobox = Ext.create('Ext.form.ComboBox', {
+            fieldLabel:   "End Minute:",
+            store:        minuteStore,
+            queryMode:    'local',
+            displayField: 'name',
+            valueField:   'value',
+            value: minuteStore.getAt(59).get('value'),
+            listeners: {
+                scope: this,
+                'select': function(combobox, records) {
+                    me._endMinuteString = records[0].get('value');
+                }
+            }
+        });
+
+        this.down('#startDateTimeChooser').add(this._startDateTextField);
+        this.down('#startDateTimeChooser').add(this._startHourCombobox);
+        this.down('#startDateTimeChooser').add(this._startMinuteCombobox);
+
+        this.down('#endDateTimeChooser').add(this._endDateTextField);
+        this.down('#endDateTimeChooser').add(this._endHourCombobox);
+        this.down('#endDateTimeChooser').add(this._endMinuteCombobox);
+
+        this._findChangesetsButton = Ext.create('Ext.Container', {
+            items: [{
+                xtype: 'rallybutton',
+                text: 'Look For Changesets',
+                handler: function() {
+                    me._validateTimebox();
+                }
+            }]
+        });
+
+        this.down('#controlsContainer').add(this._findChangesetsButton);
+    },
+
+    _initializeDefaultDates: function() {
+
+        console.log('_initializeDefaultDates');
+
+        var me = this;
+
+        me._startDateString = me._dateToISOString(new Date(), false, true);
+        me._endDateString = me._dateToISOString(new Date(), false, true);
+    },
+
+    _padIntegerToString: function(num, size) {
+
+        console.log('_padIntegerToString');
+        var numToPad = Math.abs(num);
+
+        var paddedString = numToPad + "";
+        while (paddedString.length < size) {
+            paddedString = "0" + paddedString;
+        }
+        if (num >= 0) {
+            return paddedString;
+        } else {
+            return "-" + paddedString;
+        }
+    },
+
+    _createStartDateChooserDialog: function() {
+
+        console.log('_createStartDateChooserDialog');
+
+        var me = this;
+
+        if (me._startDateChooserDialog) {
+            me._startDateChooserDialog.destroy();
+        }
+
+        var label = "Choose Start Commit Date:";
+        var defaultDate = new Date();
+        var confirmLabel = "Ok";
+        var maxDate = new Date();
+
+        me._startDateChooserDialog = Ext.create('ChangesetMover.ChooseDateDialog', {
+            calendarLabel: label,
+            defaultDate: defaultDate,
+            confirmLabel: confirmLabel,
+            maxDate: maxDate,
+            listeners: {
+                confirm: function(dialog, chosendate) {
+                    // First strip time from string
+                    me._startDateString = me._dateToISOString(chosendate, false, true);
+
+                    // Update Text field
+                    me._startDateTextField.setValue(me._startDateString);
+                }
+            }
+        });
+    },
+
+    _createEndDateChooserDialog: function() {
+
+        console.log('_createEndDateChooserDialog');
+
+        var me = this;
+
+        if (me._endDateChooserDialog) {
+            me._endDateChooserDialog.destroy();
+        }
+
+        var label = "Choose End Commit Date:";
+        var defaultDate = new Date();
+        var confirmLabel = "Ok";
+
+        me._endDateChooserDialog = Ext.create('ChangesetMover.ChooseDateDialog', {
+            calendarLabel: label,
+            defaultDate: defaultDate,
+            confirmLabel: confirmLabel,
+            listeners: {
+                confirm: function(dialog, chosendate) {
+                    // First strip time from string
+                    me._endDateString = me._dateToISOString(chosendate, false, true);
+
+                    // Update Text field
+                    me._endDateTextField.setValue(me._endDateString);
+                }
+            }
+        });
+    },
+
+    _validateTimebox: function() {
+
+        var me = this;
+
+        // Get Local time formatted Strings with UTC Offsets
+        var startDate_LocalTime_StringFormat = me._getDateStringWithUTCOffset(
+            me._startDateString,
+            me._startHourString,
+            me._startMinuteString
+        );
+        var endDate_LocalTime_StringFormat = me._getDateStringWithUTCOffset(
+            me._endDateString,
+            me._endHourString,
+            me._endMinuteString
+        );
+
+        var now = new Date();
+        var nowUTCString = me._dateToISOString(now, true, false);
+        var nowUTC = Rally.util.DateTime.fromIsoString(nowUTCString);
+
+        // convert to Date objects (and to UTC in the process)
+        var startDateUTC = Rally.util.DateTime.fromIsoString(startDate_LocalTime_StringFormat);
+        var endDateUTC = Rally.util.DateTime.fromIsoString(endDate_LocalTime_StringFormat);
+
+        // Do validation checks
+        if (startDateUTC >= nowUTC) {
+            me._startDateIsInFutureNotify();
+            return;
+        }
+
+        if (startDateUTC >= endDateUTC) {
+            me._startDateIsGTEndDateNotify();
+            return;
+        }
+
+        // Convert back to ISO Strings, this time - we'll allow conversion to UTC
+        var startDateStringUTC = me._dateToISOString(startDateUTC, true, false);
+        var endDateStringUTC = me._dateToISOString(endDateUTC, true, false);
+
+        console.log(startDateStringUTC);
+        console.log(endDateStringUTC);
+    },
+
+    _dateToISOString: function(date, convertToUTC, stripTimePortion) {
+
+        if (stripTimePortion) {
+            return Rally.util.DateTime.toIsoString( date, convertToUTC ).replace(/T[\W\w]*/,"");
+        } else {
+            return Rally.util.DateTime.toIsoString( date, convertToUTC );
+        }
+    },
+
+    _getDateStringWithUTCOffset: function(dateString, hourString, minuteString) {
+
+        var me = this;
+        var dateTimeSeparator     = "T";
+        var timeDelim             = ":";
+        var secondsString         = "00";
+        var offsetMinutesString   = "00";
+        var offsetHoursString     = me._getUTCOffsetString();
+
+        return dateString + dateTimeSeparator + hourString + timeDelim +
+            minuteString + timeDelim + secondsString + offsetHoursString + timeDelim + offsetMinutesString;
+
+    },
+
+    _getUTCOffsetString: function() {
+        return this._padIntegerToString(parseInt(Ext.Date.format(new Date(), "Z"), 10)/3600, 2);
+    },
+
+    _startDateIsInFutureNotify: function() {
+
+        var me = this;
+
+        if (me._startDateIsInFutureDialog) {
+            me._startDateIsInFutureDialog.destroy();
+        }
+
+        me._startDateIsInFutureDialog = Ext.create('Rally.ui.dialog.ConfirmDialog', {
+            title: "Start Date/Time is in the Future",
+            message: "Please Select Start Date/Time that's in the past.",
+            confirmLabel: "Ok",
+            listeners: {
+                confirm: function(){
+                    return;
+                }
+            }
+        });
+    },
+
+    _startDateIsGTEndDateNotify: function() {
+
+        var me = this;
+
+        if (me._startDateIsGTEndDateDialog) {
+            me._startDateIsGTEndDate.destroy();
+        }
+
+        me._startDateIsGTEndDate = Ext.create('Rally.ui.dialog.ConfirmDialog', {
+            title: "Start Date/Time is greater than End Date/Time",
+            message: "Please Select Start Date/Time that's before End Date/Time",
+            confirmLabel: "Ok",
+            listeners: {
+                confirm: function(){
+                    return;
+                }
+            }
+        });
+    }
+
+});
+
+                Ext.define('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
+    extend: 'Rally.ui.dialog.Dialog',
+    alias: 'widget.newchangesetattributes',
+
+    requires: [
+        'Rally.ui.Button',
+        'Rally.ui.dialog.Dialog',
+        'Rally.ui.TextField'
+    ],
+
+    clientMetrics: {
+        beginEvent: 'beforeshow',
+        endEvent: 'show',
+        description: 'dialog shown'
+    },
+
+    width: 350,
+    closable: true,
+    autoShow: true,
+    cls: 'rally-confirm-dialog',
+
+    /**
+     * @cfg {String}
+     * Title to give to the dialog
+     */
+    title: '',
+
+    /**
+     * @cfg {String}
+     * A question to ask the user
+     */
+    message: '',
+
+    /**
+     * @cfg {Boolean}
+     * whether to show the Revision field
+     */
+    showRevisionField: false,
+
+     /**
+     * @cfg {String}
+     * Current commit message
+     */
+    currentCommitMessage: '',
+
+    /**
+     * @cfg {String}
+     * Current commit message
+     */
+    targetFormattedID: '',
+
+    /**
+     * @cfg {String}
+     * The label for the left button
+     */
+    confirmLabel: 'Continue',
+
+    /**
+     * @cfg {String}
+     * The label for the right button
+     */
+    cancelLabel: 'Cancel',
+
+    _scmRepositoriesCombobox: null,
+    _selectedSCMRepo: null,
+
+    items: [
+        {
+            xtype: 'component',
+            itemId: 'confirmMsg',
+            cls: 'confirmMessage'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'Target FormattedID:',
+            itemId: 'targetFmtId',
+            cls: 'targetFormattedID'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'Current Commit Message:',
+            itemId: 'currentCommitMsg',
+            cls: 'currentCommitMessage'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'Revision:',
+            itemId: 'revisionNbr'
+        },
+        {
+            xtype: 'container',
+            itemId: 'scmReposContainer'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'New Commit Message:',
+            itemId: 'newCommitMsg'
+        }
+    ],
+
+    dockedItems: [
+        {
+            xtype: 'toolbar',
+            dock: 'bottom',
+            padding: '10',
+            layout: {
+                type: 'hbox',
+                pack: 'center'
+            },
+            ui: 'footer',
+            items: [
+                {
+                    xtype: 'rallybutton',
+                    cls: 'confirm primary small',
+                    itemId: 'confirmButton',
+                    userAction: 'clicked yes in dialog'
+                },
+                {
+                    xtype: 'rallybutton',
+                    cls: 'cancel secondary small',
+                    itemId: 'cancelButton',
+                    ui: 'link'
+                }
+            ]
+        }
+    ],
+
+    constructor: function(config) {
+        this.callParent(arguments);
+
+        if (this.autoCenter) {
+            this.scrollListener.saveScrollPosition = true;
+        }
+
+        if (config.currentCommitMessage) {
+            this.currentCommitMessage = config.currentCommitMessage;
+        }
+
+        if (config.targetFormattedID) {
+            this.targetFormattedID = config.targetFormattedID;
+        }
+
+        if (config.showRevisionField) {
+            this.showRevisionField = config.showRevisionField;
+        }
+
+        if (config.scmRepositories) {
+            this.scmRepositories = config.scmRepositories;
+        }
+    },
+
+    initComponent: function() {
+        this.callParent(arguments);
+
+        this.addEvents(
+            /**
+             * @event
+             */
+            'confirm',
+
+            /**
+             * @event
+             */
+            'cancel'
+        );
+
+        this.down('#confirmButton').on('click', this._onConfirm, this);
+        this.down('#confirmButton').setText(this.confirmLabel);
+
+        this.down('#cancelButton').on('click', this._onCancel, this);
+        this.down('#cancelButton').setText(this.cancelLabel);
+
+        if(this.message) {
+            this.down('#confirmMsg').update(this.message);
+        } else {
+            this.down('#confirmMsg').hide();
+        }
+
+        if(this.currentCommitMessage) {
+            this.down('#currentCommitMsg').setValue(this.currentCommitMessage);
+            this.down('#currentCommitMsg').setDisabled(true);
+        } else {
+            this.down('#currentCommitMsg').hide();
+        }
+
+        if(this.targetFormattedID) {
+            this.down('#targetFmtId').setValue(this.targetFormattedID);
+            this.down('#targetFmtId').setDisabled(true);
+        } else {
+            this.down('#targetFmtId').hide();
+        }
+
+        if (!this.showRevisionField) {
+            this.down('#revisionNbr').hide();
+        }
+
+        if (this.scmRepositories) {
+
+            var me = this;
+
+            var scmReposData = [];
+            Ext.Array.each(this.scmRepositories, function(scmrepository) {
+                scmReposData.push({
+                    "name": scmrepository.get('Name'),
+                    "_ref": scmrepository.get('_ref')
+                });
+            });
+
+            var scmReposStore = Ext.create('Ext.data.Store', {
+                fields: ['name', '_ref'],
+                data: scmReposData
+            });
+
+            me._scmRepositoriesCombobox = Ext.create('Ext.form.ComboBox', {
+                fieldLabel:   'Choose SCM Repo:',
+                store:        scmReposStore,
+                queryMode:    'local',
+                displayField: 'name',
+                valueField:   'type',
+                minWidth: 500,
+                listeners: {
+                    scope: this,
+                    'select': me._selectSCMRepo
+                }
+            });
+            this.down('#scmReposContainer').add(me._scmRepositoriesCombobox);
+        }
+    },
+
+    _selectSCMRepo: function(combobox, records) {
+        var me = this;
+        me._selectedSCMRepo = records[0];
+    },
+
+    show: function() {
+        if (this.autoCenter) {
+            this._saveScrollPosition();
+        }
+        this.callParent(arguments);
+    },
+
+    close: function() {
+        this._onCancel();
+    },
+
+    _onConfirm: function() {
+
+        if (this._scmRepositoriesCombobox) {
+            this.fireEvent(
+                'confirm',
+                this,
+                this.down('#newCommitMsg').getValue(),
+                this.down('#revisionNbr').getValue(),
+                this._selectedSCMRepo
+            );
+        } else {
+            this.fireEvent(
+                'confirm',
+                this,
+                this.down('#newCommitMsg').getValue(),
+                this.down('#revisionNbr').getValue()
+            );
+        }
+        this.destroy();
+    },
+
+    _onCancel: function() {
+        this.fireEvent('cancel', this);
+        this.destroy();
+    },
+
+    _saveScrollPosition: function() {
+        this.savedScrollPosition = {
+            xOffset: (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft,
+            yOffset: (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop
+        };
+    }
+});
+                Ext.define('ChangesetMover.ChooseDateDialog', {
+    extend: 'Rally.ui.dialog.Dialog',
+    alias: 'widget.choosedate',
+
+    requires: [
+        'Rally.ui.Button',
+        'Rally.ui.dialog.Dialog',
+        'Rally.ui.TextField'
+    ],
+
+    clientMetrics: {
+        beginEvent: 'beforeshow',
+        endEvent: 'show',
+        description: 'dialog shown'
+    },
+
+    width: 350,
+    closable: true,
+    autoShow: true,
+    cls: 'rally-confirm-dialog',
+
+    /**
+     * @cfg {String}
+     * Title to give to the dialog
+     */
+    title: '',
+
+    /**
+     * @cfg {String}
+     * A question to ask the user
+     */
+    message: '',
+
+    /**
+     * @cfg {String}
+     * The label for the left button
+     */
+    confirmLabel: 'Continue',
+
+    /**
+     * @cfg {String}
+     * The label for the right button
+     */
+    cancelLabel: 'Cancel',
+
+    /**
+     * @cfg {Date}
+     * The default date
+     */
+    defaultDate: null,
+
+    /**
+     * @cfg {Date}
+     * The selected date
+     */
+    selectedDate: null,
+
+    calendar: null,
+
+    items: [
+        {
+            xtype: 'component',
+            itemId: 'confirmMsg',
+            cls: 'confirmMessage'
+        },
+        {
+            xtype: 'container',
+            itemId: 'calendarContainer'
+        }
+    ],
+
+    dockedItems: [
+        {
+            xtype: 'toolbar',
+            dock: 'bottom',
+            padding: '10',
+            layout: {
+                type: 'hbox',
+                pack: 'center'
+            },
+            ui: 'footer',
+            items: [
+                {
+                    xtype: 'rallybutton',
+                    cls: 'confirm primary small',
+                    itemId: 'confirmButton',
+                    userAction: 'clicked yes in dialog'
+                },
+                {
+                    xtype: 'rallybutton',
+                    cls: 'cancel secondary small',
+                    itemId: 'cancelButton',
+                    ui: 'link'
+                }
+            ]
+        }
+    ],
+
+    constructor: function(config) {
+        this.callParent(arguments);
+
+        if (this.autoCenter) {
+            this.scrollListener.saveScrollPosition = true;
+        }
+
+        this.defaultDate = new Date();
+        if (config.defaultDate) {
+            this.defaultDate = config.defaultDate;
+        }
+
+        // Default selected date to default date
+        this.selectedDate = this.defaultDate;
+
+        if (config.calendarLabel) {
+            this.calendarLabel = config.calendarLabel;
+        }
+
+        if (config.maxDate) {
+            this.maxDate = config.maxDate;
+        }
+
+    },
+
+    initComponent: function() {
+
+        var me = this;
+
+        this.callParent(arguments);
+
+        this.addEvents(
+            /**
+             * @event
+             */
+            'confirm',
+
+            /**
+             * @event
+             */
+            'cancel'
+        );
+
+        this.down('#confirmButton').on('click', this._onConfirm, this);
+        this.down('#confirmButton').setText(this.confirmLabel);
+
+        this.down('#cancelButton').on('click', this._onCancel, this);
+        this.down('#cancelButton').setText(this.cancelLabel);
+
+        if(this.message) {
+            this.down('#confirmMsg').update(this.message);
+        } else {
+            this.down('#confirmMsg').hide();
+        }
+
+        var calendarLabel = "Choose a date:";
+        if (this.calendarLabel) {
+            calendarLabel = this.calendarLabel;
+        }
+
+        var calendarConfig = {
+            title: calendarLabel,
+            width: 200,
+            bodyPadding: 10,
+            renderTo: Ext.getBody(),
+            items: [{
+                xtype: 'datepicker',
+                handler: function(picker, date) {
+                    console.log(date);
+                    me.selectedDate = date;
+                }
+            }]
+        };
+
+        if (this.maxDate) {
+            calendarConfig.maxDate = this.maxDate;
+        }
+
+        this.calendar = Ext.create('Ext.panel.Panel', calendarConfig);
+        this.down('#calendarContainer').add(this.calendar);
+    },
+
+    show: function() {
+        if (this.autoCenter) {
+            this._saveScrollPosition();
+        }
+        this.callParent(arguments);
+    },
+
+    close: function() {
+        this._onCancel();
+    },
+
+    _onConfirm: function() {
+        this.fireEvent(
+            'confirm',
+            this,
+            this.selectedDate
+        );
+        this.destroy();
+    },
+
+    _onCancel: function() {
+        this.fireEvent('cancel', this);
+        this.destroy();
+    },
+
+    _saveScrollPosition: function() {
+        this.savedScrollPosition = {
+            xOffset: (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft,
+            yOffset: (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop
+        };
+    }
+});
+
+            Rally.launchApp('ChangesetMover', {
+                name:"Changeset Mover",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        .app {
+     /* Add app styles here */
+}
+
+    </style>
+</head>
+<body></body>
+</html>

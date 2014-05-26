@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>changeset-utils</title>
+    <title>Artifact Changeset Helper</title>
 
-    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc2/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc2/sdk.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function () {
@@ -389,6 +389,8 @@
 
         me.down('#gridContainer').add(me._artifactGrid);
         me._artifactGrid.reconfigure(gridStore);
+
+        // Now that we have the Artifact grid constructed, create a grid for its changesets
         me._makeChangesetGrid(me);
     },
 
@@ -401,7 +403,7 @@
         var message = "Define New Changeset Attributes";
         var confirmLabel = "Create Changeset";
 
-        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
             message: message,
             targetFormattedID: artifact.get('FormattedID'),
             confirmLabel: confirmLabel,
@@ -486,6 +488,8 @@
     },
 
     _missingRequiredData: function(scope) {
+
+        // console.log('_missingRequiredData');
 
         var me = this;
 
@@ -659,7 +663,7 @@
         var confirmLabel = "Move Changeset";
         var currentCommitMessage = sourcechangeset.Message || '' ;
 
-        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
             message: message,
             targetFormattedID: targetartifact.get('FormattedID'),
             currentCommitMessage: currentCommitMessage,
@@ -846,7 +850,7 @@
     }
 
 });
-                Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+                Ext.define('ArtifactChangesetHelper.ChangesetNewAttribsDialog', {
     extend: 'Rally.ui.dialog.Dialog',
     alias: 'widget.newchangesetattributes',
 
@@ -1126,7 +1130,7 @@
 });
 
             Rally.launchApp('ArtifactChangesetHelper', {
-                name:"changeset-utils",
+                name:"Artifact Changeset Helper",
 	            parentRepos:""
             });
 

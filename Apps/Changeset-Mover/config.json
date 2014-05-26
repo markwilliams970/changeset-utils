@@ -1,11 +1,12 @@
 {
-   "name": "Artifact Changeset Helper",
-   "className": "ArtifactChangesetHelper",
+   "name": "Changeset Mover",
+   "className": "ChangesetMover",
    "server": "https://rally1.rallydev.com",
    "sdk": "2.0rc2",
    "javascript": [
       "App.js",
-      "ChangesetNewAttribsDialog.js"
+      "ChangesetNewAttribsDialog.js",
+      "ChooseDateDialog.js"
    ],
    "css": [
       "app.css"
