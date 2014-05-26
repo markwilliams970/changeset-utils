@@ -14,6 +14,7 @@ Some handy Javascript Apps, and some Ruby Scripts to help work with Rally Change
  * Javascript App to run inside Rally that lets you:
  * Query for all Changesets whose CommitTimestamp lies within a selected timerange
  * Move selected Changesets to a new Artifact, or, delete them
+ * Helps with cleanup of errant commits/commit messages from a Rally SCM connector (Subversion, Git, Github, etc.)
 * App Pre-requisites: Must be used in a Rally Workspace where Build/Changesets are enabled. Install as a Custom HTML App in Rally.
 * Scripts:
  * create_changeset.rb
