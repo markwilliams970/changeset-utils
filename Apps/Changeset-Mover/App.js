@@ -562,10 +562,15 @@ Ext.define('ChangesetMover', {
                 load: function(store, records, success) {
                     deferred.resolve(records);
                 }
-            }
+            },
+            sorters: [
+                {
+                    property: 'CommitTimestamp',
+                    direction: 'DESC'
+                }
+            ]
         });
         return deferred;
-
     },
 
 
@@ -643,12 +648,6 @@ Ext.define('ChangesetMover', {
                     deferred.resolve([]);
                 }
             }
-            // sorters: [
-            //     {
-            //         property: 'CommitTimestamp',
-            //         direction: 'DESC'
-            //     }
-            // ]
         });
         return deferred;
     },

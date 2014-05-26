@@ -571,10 +571,15 @@
                 load: function(store, records, success) {
                     deferred.resolve(records);
                 }
-            }
+            },
+            sorters: [
+                {
+                    property: 'CommitTimestamp',
+                    direction: 'DESC'
+                }
+            ]
         });
         return deferred;
-
     },
 
 
@@ -652,12 +657,6 @@
                     deferred.resolve([]);
                 }
             }
-            // sorters: [
-            //     {
-            //         property: 'CommitTimestamp',
-            //         direction: 'DESC'
-            //     }
-            // ]
         });
         return deferred;
     },
