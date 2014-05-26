@@ -167,7 +167,7 @@ new_changeset["Revision"] = changeset_revision
 new_changeset["Uri"] = $my_scm_url
 new_changeset["SCMRepository"] = changeset_scm_repo
 new_changeset["Message"] = changeset_message
-new_changeset["CommitTimeStamp"] = Time.now.utc.iso8601
+new_changeset["CommitTimestamp"] = Time.now.utc.iso8601
 new_changeset["Artifacts"] = [found_artifact]
 
 create_result = @rally.create(:changeset, new_changeset)
