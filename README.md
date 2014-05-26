@@ -4,7 +4,7 @@ changeset-utils
 Utility Apps and Scripts to Help With Rally Changesets / SCM Connectors
 
 ## Overview
-Some handy Javascript Apps, and some Ruby Scripts to help work with Rally Changesets / SCM Connectors.
+Some handy Javascript Apps, and some Ruby Scripts to help work with Rally Changesets / SCM Connectors. See individual README's in Sub-Folders for more details.
 
 * Apps:
 * Artifact-Changeset-Helper
@@ -22,7 +22,9 @@ Some handy Javascript Apps, and some Ruby Scripts to help work with Rally Change
  * Interactive script to delete a changeset from a Selected Rally Artifact, using Ruby
  * create_scm.rb
  * Interactive script to allow creation of a new SCM Repository in a Rally Workspace, using Ruby
-
+* Script Requirements:
+ * Ruby 1.9.3 or higher
+ * rally_api 1.0 or higher
 ## License
 
 These tools are released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
