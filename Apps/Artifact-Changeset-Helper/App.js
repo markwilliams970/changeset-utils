@@ -1,7 +1,13 @@
-Ext.define('ArtifactChangesetMover', {
+Ext.define('ArtifactChangesetHelper', {
     extend: 'Rally.app.App',
     componentCls: 'app',
     items: [
+        {
+            xtype: 'container',
+            itemId: 'labelContainer',
+            html: 'Select a Story, Defect, or Task:',
+            padding: '10px'
+        },
         {
             xtype: 'container',
             itemId: 'controlsContainer',
@@ -16,83 +22,86 @@ Ext.define('ArtifactChangesetMover', {
 
     _rallyServer: null,
 
-    _selectedArtifactType: null,
+    _scmRepositories: null,
+
     _selectedArtifact: null,
     _artifactChangesetsByChangesetOid: {},
     _changesetArtifactsByChangesetOid: {},
-    _selectedIteration: null,
+
     _moveChangesetTargetArtifact: null,
 
-    _iterationCombobox: null,
-    _artifactTypeCombobox: null,
-    _artifactCombobox: null,
+    _openSelectDialogButton: null,
 
     _artifactGrid: null,
     _changesetGrid: null,
+    _missingRequireDataDialog: null,
     _targetArtifactChooserDialog: null,
     _moveChangesetAttributesDialog: null,
     _moveChangesetTargetArtifactCombobox: null,
 
     launch: function() {
 
+        var me = this;
+
+        // Populate some initial data
+
         // Get the hostname
         this._getHostName();
 
-        // Grab and use the timebox scope if we have it
-        var timeboxScope = this.getContext().getTimeboxScope();
+        // Get SCM Repositories
+        this._getSCMRepositories();
 
-        if(timeboxScope) {
-            var record = timeboxScope.getRecord();
-            var name = record.get('Name');
+        // Get CurrentUser
+        this._currentUser = this.getContext().getUser();
+    },
 
-            this._selectedIteration = record.data;
-            this._onIterationSelect();
+    _getSCMRepositories: function() {
 
-        // Otherwise add an iteration combo box to the page
-        } else {
-            // add the iteration dropdown selector
+        // console.log('_getSCMRepositories');
 
-            this._iterationCombobox = Ext.create('Rally.ui.combobox.IterationComboBox', {
-                itemId : 'iterationSelector',
-                fieldLabel: 'Choose Iteration',
-                listeners: {
-                    select: this._onIterationSelect,
-                    ready:  this._onIterationSelect,
-                    scope:  this
-                },
-                minWidth: 500
-            });
+        var me = this;
 
-            this.down("#controlsContainer").add( this._iterationCombobox );
-        }
-
-        var artifactTypesStore = Ext.create('Ext.data.Store', {
-            fields: ['name', 'type'],
-            data: [
-                {"name": "User Story",     "type": "HierarchicalRequirement"},
-                {"name": "Defect",         "type": "Defect"},
-                {"name": "Task",           "type": "Task"}
-            ]
-        });
-
-        this._artifactTypeCombobox = Ext.create('Ext.form.ComboBox', {
-            fieldLabel:   'Choose Artifact Type',
-            store:        artifactTypesStore,
-            queryMode:    'local',
-            displayField: 'name',
-            valueField:   'type',
-            minWidth: 500,
+        Ext.create('Rally.data.wsapi.Store', {
+            model: 'SCMRepository',
+            fetch: ['ObjectID', 'Name', 'Uri'],
+            autoLoad: true,
+            limit: 4000,
+            context: {
+                projectScopeUp: false,
+                projectScopeDown: false
+            },
             listeners: {
                 scope: this,
-                'select': this._populateArtifactCombobox
+                // kick us off
+                load: function(store, data) {
+                    me._scmRepositories = data;
+                    this._buildUI();
+                }
+            }
+        });
+    },
+
+    _buildUI: function() {
+
+        // console.log('_buildUI');
+        var me = this;
+
+        // Start us off
+        this._openSelectDialogButton = Ext.create('Rally.ui.Button', {
+            text: 'Select an Artifact',
+            handler: function() {
+                me._createSelectInitialArtifactDialog();
             }
         });
 
-        this.down("#controlsContainer").add(this._artifactTypeCombobox);
+        this.down('#controlsContainer').add(this._openSelectDialogButton);
 
     },
 
     _getHostName: function() {
+
+        // console.log('_getHostName');
+
         testUrl = window.location.hostname || "rally1.rallydev.com";
         testUrlSplit = testUrl.split("/");
         if (testUrlSplit.length === 1) {
@@ -103,64 +112,33 @@ Ext.define('ArtifactChangesetMover', {
         this._rallyServer = "https://" + this._rallyHost;
     },
 
-    onTimeboxScopeChange: function(newTimeboxScope) {
-        this.callParent(arguments);
+    _createSelectInitialArtifactDialog: function() {
 
-        if(newTimeboxScope) {
-            var record = newTimeboxScope.getRecord();
-
-            this._selectedIteration = record.data;
-        }
-    },
-
-    _onIterationSelect : function() {
-
-        if (_.isUndefined( this.getContext().getTimeboxScope())) {
-            var value =  this._iterationCombobox.getRecord();
-            this._selectedIteration = value.data;
-        }
-    },
-
-    _populateArtifactCombobox: function() {
+        // console.log('_createSelectInitialArtifactDialog');
 
         var me = this;
 
-        if (this._artifactCombobox) {
-            this._artifactCombobox.destroy();
-        }
-
-        this._artifactCombobox = Ext.create('Ext.Container', {
-            items: [{
-                xtype: 'rallycombobox',
-                fieldLabel:   'Choose Artifact',
-                storeConfig: {
-                    autoLoad: true,
-                    model: me._artifactTypeCombobox.getValue(),
-                    filters: [
-                        {
-                            property: 'Iteration.Name',
-                            operator: '=',
-                            value: me._selectedIteration.Name
-                        }
-                    ]
+        me._selectInitialArtifactDialog = Ext.create('Rally.ui.dialog.ChooserDialog', {
+            artifactTypes: ['UserStory', 'Defect', 'Task'],
+            autoShow: true,
+            height: 600,
+            title: 'Choose Artifact',
+            listeners: {
+                artifactChosen: function(artifact) {
+                    me._hydrateData(artifact);
                 },
-                listeners: {
-                    scope: this,
-                    'select': me._hydrateData
-                }
-            }]
-        });
-
-        this.down('#controlsContainer').add(this._artifactCombobox);
+                scope: me
+            }
+         });
 
     },
 
-    _hydrateData: function(combobox, records) {
+    _hydrateData: function(record) {
 
         // console.log('_hydrateData');
 
         var me = this;
-        me._selectedArtifact = records[0];
+        me._selectedArtifact = record;
 
         // Clear out any previous data
         me._artifactChangesetsByChangesetOid = {};
@@ -251,7 +229,7 @@ Ext.define('ArtifactChangesetMover', {
         var artifactName         = artifact.get('Name');
 
         var changesetCollection  = artifact.getCollection("Changesets",
-            { fetch: ['Author','Artifacts','Revision','Message','CommitTimestamp'] }
+            { fetch: ['Author','Artifacts','Name','Revision','Message','CommitTimestamp'] }
         );
 
         var changesetCount       = changesetCollection.getCount();
@@ -304,7 +282,6 @@ Ext.define('ArtifactChangesetMover', {
     _hydrateChangesetArtifacts: function(changeset, artifactType, scope) {
 
         var me = scope;
-        //changeset = changeset[0];
 
         // console.log('_hydrateChangesetArtifacts');
 
@@ -373,7 +350,6 @@ Ext.define('ArtifactChangesetMover', {
             store: gridStore,
 
             columnCfgs: [
-
                 {
                     text: 'Formatted ID', dataIndex: 'FormattedID', xtype: 'templatecolumn',
                     tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
@@ -391,7 +367,7 @@ Ext.define('ArtifactChangesetMover', {
                                 text: 'New Changeset',
                                 width: 120,
                                 handler: function () {
-                                    me._createChangesetDialog(record.data, me);
+                                    me._createChangesetDialog(record, me);
                                 }
                             });
                         }, 50);
@@ -408,7 +384,116 @@ Ext.define('ArtifactChangesetMover', {
     },
 
     _createChangesetDialog: function(artifact, scope) {
-        console.log('_createChangesetDialog');
+
+        // console.log('_createChangesetDialog');
+
+        var me = scope;
+
+        var message = "Define New Changeset Attributes";
+        var confirmLabel = "Create Changeset";
+
+        me._moveChangesetAttributesDialog = Ext.create('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
+            message: message,
+            targetFormattedID: artifact.get('FormattedID'),
+            confirmLabel: confirmLabel,
+            showRevisionField: true,
+            scmRepositories: me._scmRepositories,
+            listeners: {
+                confirm: function(dialog, commitMessage, revisionNumber, scmRepository) {
+                    me._createNewChangeset(artifact, commitMessage, revisionNumber, scmRepository, scope);
+                }
+            }
+        });
+    },
+
+    _createNewChangeset: function(artifact, commitMessage, revisionNumber, scmRepository, scope) {
+
+        // console.log('_createNewChangeset');
+
+        var me = scope;
+
+        if (!commitMessage || !revisionNumber || !scmRepository) {
+            me._missingRequiredData(me);
+        } else {
+
+            var commitTimestamp = Rally.util.DateTime.toIsoString( new Date(), true );
+
+            var changesetModel = Rally.data.ModelFactory.getModel({
+                type: 'Changeset',
+                scope: this,
+                success: function(model, operation) {
+
+                    var newChangesetRecord = Ext.create(model, {
+                        Revision: revisionNumber,
+                        SCMRepository: {"_ref": scmRepository.get('_ref')},
+                        Artifacts: [
+                            {"_ref": artifact.get('_ref')}
+                        ],
+                        Message: commitMessage,
+                        CommitTimestamp: commitTimestamp,
+                        Author: {"_ref": me._currentUser._ref}
+                    });
+
+                    newChangesetRecord.save({
+                        callback: function(result, operation) {
+                            if (operation.wasSuccessful()) {
+                                // Notify of succcess
+
+                                var successMessage = "Successfully Created New Changeset!";
+
+                                Ext.create('Rally.ui.dialog.ConfirmDialog', {
+                                    title: "Changeset Created!",
+                                    message: successMessage,
+                                    confirmLabel: "Ok",
+                                    listeners: {
+                                        confirm: function () {
+                                            Ext.defer(function() {
+                                                if (me._changesetGrid) {
+                                                    // Re-build and Re-display grid LESS the moved changeset
+                                                    me._hydrateData(artifact);
+                                                }
+                                            }, 500);
+                                            return;
+                                        }
+                                    }
+                                });
+                            } else {
+                                Ext.create('Rally.ui.dialog.ConfirmDialog', {
+                                    title: "Changeset Not Created",
+                                    message: "Error Creating Changeset!",
+                                    confirmLabel: "Ok",
+                                    listeners: {
+                                        confirm: function () {
+                                            return;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    },
+
+    _missingRequiredData: function(scope) {
+
+        var me = this;
+
+        if (me._missingRequireDataDialog) {
+            me._missingRequireDataDialog.destroy();
+        }
+
+        me._missingRequireDataDialog = Ext.create('Rally.ui.dialog.ConfirmDialog', {
+            title: "Missing Requied Changeset Data.",
+            message: "Please include Revision, SCMRepo, and Message",
+            confirmLabel: "Ok",
+            listeners: {
+                confirm: function(){
+                    return;
+                }
+            }
+        });
     },
 
     _makeChangesetGrid: function(scope) {
@@ -429,6 +514,7 @@ Ext.define('ArtifactChangesetMover', {
             var changesetWithArtifacts = {
                 "_ref"             : changeset.get('_ref'),
                 "ObjectID"         : changeset.get('ObjectID'),
+                "Name"             : changeset.get('Name'),
                 "Revision"         : changeset.get('Revision'),
                 "CommitTimestamp"  : changeset.get('CommitTimestamp') || '',
                 "Message"          : changeset.get('Message'),
@@ -449,6 +535,9 @@ Ext.define('ArtifactChangesetMover', {
             store: gridStore,
 
             columnCfgs: [
+                {
+                    text: 'Name', dataIndex: 'Name', flex: 1
+                },
                 {
                     text: 'Revision', dataIndex: 'Revision'
                 },

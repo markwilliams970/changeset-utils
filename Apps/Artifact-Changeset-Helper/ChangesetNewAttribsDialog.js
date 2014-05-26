@@ -31,6 +31,12 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
      */
     message: '',
 
+    /**
+     * @cfg {Boolean}
+     * whether to show the Revision field
+     */
+    showRevisionField: false,
+
      /**
      * @cfg {String}
      * Current commit message
@@ -55,6 +61,9 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
      */
     cancelLabel: 'Cancel',
 
+    _scmRepositoriesCombobox: null,
+    _selectedSCMRepo: null,
+
     items: [
         {
             xtype: 'component',
@@ -72,6 +81,15 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
             fieldLabel: 'Current Commit Message:',
             itemId: 'currentCommitMsg',
             cls: 'currentCommitMessage'
+        },
+        {
+            xtype: 'rallytextfield',
+            fieldLabel: 'Revision:',
+            itemId: 'revisionNbr'
+        },
+        {
+            xtype: 'container',
+            itemId: 'scmReposContainer'
         },
         {
             xtype: 'rallytextfield',
@@ -121,6 +139,14 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
         if (config.targetFormattedID) {
             this.targetFormattedID = config.targetFormattedID;
         }
+
+        if (config.showRevisionField) {
+            this.showRevisionField = config.showRevisionField;
+        }
+
+        if (config.scmRepositories) {
+            this.scmRepositories = config.scmRepositories;
+        }
     },
 
     initComponent: function() {
@@ -152,15 +178,58 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
 
         if(this.currentCommitMessage) {
             this.down('#currentCommitMsg').setValue(this.currentCommitMessage);
+            this.down('#currentCommitMsg').setDisabled(true);
         } else {
             this.down('#currentCommitMsg').hide();
         }
 
         if(this.targetFormattedID) {
             this.down('#targetFmtId').setValue(this.targetFormattedID);
+            this.down('#targetFmtId').setDisabled(true);
         } else {
             this.down('#targetFmtId').hide();
         }
+
+        if (!this.showRevisionField) {
+            this.down('#revisionNbr').hide();
+        }
+
+        if (this.scmRepositories) {
+
+            var me = this;
+
+            var scmReposData = [];
+            Ext.Array.each(this.scmRepositories, function(scmrepository) {
+                scmReposData.push({
+                    "name": scmrepository.get('Name'),
+                    "_ref": scmrepository.get('_ref')
+                });
+            });
+
+            var scmReposStore = Ext.create('Ext.data.Store', {
+                fields: ['name', '_ref'],
+                data: scmReposData
+            });
+
+            me._scmRepositoriesCombobox = Ext.create('Ext.form.ComboBox', {
+                fieldLabel:   'Choose SCM Repo:',
+                store:        scmReposStore,
+                queryMode:    'local',
+                displayField: 'name',
+                valueField:   'type',
+                minWidth: 500,
+                listeners: {
+                    scope: this,
+                    'select': me._selectSCMRepo
+                }
+            });
+            this.down('#scmReposContainer').add(me._scmRepositoriesCombobox);
+        }
+    },
+
+    _selectSCMRepo: function(combobox, records) {
+        var me = this;
+        me._selectedSCMRepo = records[0];
     },
 
     show: function() {
@@ -175,7 +244,23 @@ Ext.define('ArtifactChangesetMover.ChangesetNewAttribsDialog', {
     },
 
     _onConfirm: function() {
-        this.fireEvent('confirm', this, this.down('#newCommitMsg').getValue());
+
+        if (this._scmRepositoriesCombobox) {
+            this.fireEvent(
+                'confirm',
+                this,
+                this.down('#newCommitMsg').getValue(),
+                this.down('#revisionNbr').getValue(),
+                this._selectedSCMRepo
+            );
+        } else {
+            this.fireEvent(
+                'confirm',
+                this,
+                this.down('#newCommitMsg').getValue(),
+                this.down('#revisionNbr').getValue()
+            );
+        }
         this.destroy();
     },
 
