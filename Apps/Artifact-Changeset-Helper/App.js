@@ -138,6 +138,7 @@ Ext.define('ArtifactChangesetHelper', {
         // console.log('_hydrateData');
 
         var me = this;
+        me.setLoading("Loading Changeset Data...");
         me._selectedArtifact = record;
 
         // Clear out any previous data
@@ -622,7 +623,7 @@ Ext.define('ArtifactChangesetHelper', {
 
         me.down('#gridContainer').add(me._changesetGrid);
         me._changesetGrid.reconfigure(gridStore);
-
+        me.setLoading(false);
     },
 
     _selectTargetArtifactForChangesetMove: function(changesetrecord, scope) {

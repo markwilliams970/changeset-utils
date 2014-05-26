@@ -3,7 +3,7 @@
 <head>
     <title>Artifact Changeset Helper</title>
 
-    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc2/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc2/sdk.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function () {
@@ -147,6 +147,7 @@
         // console.log('_hydrateData');
 
         var me = this;
+        me.setLoading("Loading Changeset Data...");
         me._selectedArtifact = record;
 
         // Clear out any previous data
@@ -631,7 +632,7 @@
 
         me.down('#gridContainer').add(me._changesetGrid);
         me._changesetGrid.reconfigure(gridStore);
-
+        me.setLoading(false);
     },
 
     _selectTargetArtifactForChangesetMove: function(changesetrecord, scope) {
