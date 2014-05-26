@@ -6,7 +6,8 @@
    "javascript": [
       "App.js",
       "ChangesetNewAttribsDialog.js",
-      "ChooseDateDialog.js"
+      "ChooseDateDialog.js",
+      "ChooseArtifactDialog.js"
    ],
    "css": [
       "app.css"

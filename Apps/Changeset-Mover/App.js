@@ -643,13 +643,19 @@ Ext.define('ChangesetMover', {
                     deferred.resolve([]);
                 }
             }
+            // sorters: [
+            //     {
+            //         property: 'CommitTimestamp',
+            //         direction: 'DESC'
+            //     }
+            // ]
         });
         return deferred;
     },
 
     _makeGrids: function(scope) {
 
-        // console.log('_makeGrids');
+        console.log('_makeGrids');
         var me = scope;
         me._makeChangesetGrid(me);
 
@@ -657,7 +663,7 @@ Ext.define('ChangesetMover', {
 
     _makeChangesetGrid: function(scope) {
 
-        // console.log('_makeChangesetGrid');
+        console.log('_makeChangesetGrid');
 
         var me = scope;
 
@@ -746,7 +752,7 @@ Ext.define('ChangesetMover', {
                                 text: 'Move Changeset',
                                 width: 120,
                                 handler: function () {
-                                    me._selectTargetArtifactForChangesetMove(record.data, me);
+                                    me._selectSourceArtifactToDisassociate(record.data, me);
                                 }
                             });
                         }, 50);
@@ -779,9 +785,35 @@ Ext.define('ChangesetMover', {
         me._changesetGrid.reconfigure(gridStore);
     },
 
+    _selectSourceArtifactToDisassociate: function(changesetrecord, scope) {
+
+        console.log('_selectSourceArtifactToDisassociate');
+        var me = scope;
+
+        var changesetOID = changesetrecord.ObjectID;
+        var changesetArtifacts = me._changesetArtifactsByChangesetOid[changesetOID];
+
+        if (changesetArtifacts.length === 1) {
+            me._selectedArtifact = changesetArtifacts[0];
+        } else {
+            me._sourceArtifactChooserDialog = Ext.create('ChangesetMover.ChooseArtifactDialog', {
+                message: "Select Source Artifact to Dissociate",
+                confirmLabel: "Done",
+                artifactList: changesetArtifacts,
+                listeners: {
+                    confirm: function(dialog, sourceartifact) {
+                        me._selectedArtifact = sourceartifact;
+                        me._selectTargetArtifactForChangesetMove(changesetrecord, scope);
+                    }
+                }
+            });
+        }
+
+    },
+
     _selectTargetArtifactForChangesetMove: function(changesetrecord, scope) {
 
-        // console.log('_selectTargetArtifactForChangesetMove');
+        console.log('_selectTargetArtifactForChangesetMove');
         var me = scope;
 
         me._targetArtifactChooserDialog = Ext.create('Rally.ui.dialog.ChooserDialog', {
@@ -800,7 +832,7 @@ Ext.define('ChangesetMover', {
 
     _createMoveChangesetAttributesDialog: function(sourcechangeset, targetartifact, scope) {
 
-        // console.log('_createMoveChangesetAttributesDialog');
+        console.log('_createMoveChangesetAttributesDialog');
 
         var me = scope;
 
@@ -823,7 +855,7 @@ Ext.define('ChangesetMover', {
 
     _moveChangeset: function(sourcechangeset, targetartifact, newcommitmessage, scope) {
 
-        // console.log('_moveChangeset');
+        console.log('_moveChangeset');
 
         var me = scope;
         var changesetOID = sourcechangeset.ObjectID;
@@ -836,24 +868,34 @@ Ext.define('ChangesetMover', {
                     scope: this,
                     success: function(changesetHydrated, operation) {
 
-                        // Ref of currently selected Artifact that we want to disassociate from the
-                        // changeset
-                        var sourceArtifact = me._selectedArtifact;
-                        var sourceArtifactRef = sourceArtifact.get('_ref');
-
-                        var existingArtifacts = me._changesetArtifactsByChangesetOid[changesetOID];
                         var existingArtifactRefs = [];
-                        Ext.Array.each(existingArtifacts, function(artifact) {
-                            existingArtifactRefs.push(artifact.get('_ref'));
-                        });
+                        var updatedArtifactRefs = [];
 
-                        // Remove existingArtifact ref from array of Artifact refs
-                        var updatedArtifactRefs = existingArtifactRefs;
-                        var index = updatedArtifactRefs.indexOf(sourceArtifactRef);
+                        // If we're removing an existing association to a source artifact,
+                        // We have to do some slicing/dicing of our refs array first
+                        /// to _remove_ the ref for the source artifact from the array
+                        if (me._selectedArtifact) {
 
-                        if (index > -1) {
-                            updatedArtifactRefs.splice(index, 1);
+                            // Ref of currently selected Artifact that we want to disassociate from the
+                            // changeset
+                            var sourceArtifact = me._selectedArtifact;
+                            var sourceArtifactRef = sourceArtifact.get('_ref');
+
+                            var existingArtifacts = me._changesetArtifactsByChangesetOid[changesetOID];
+                            Ext.Array.each(existingArtifacts, function(artifact) {
+                                existingArtifactRefs.push(artifact.get('_ref'));
+                            });
+
+                            // Remove existingArtifact ref from array of Artifact refs
+                            updatedArtifactRefs = existingArtifactRefs;
+                            var index = updatedArtifactRefs.indexOf(sourceArtifactRef);
+
+                            if (index > -1) {
+                                updatedArtifactRefs.splice(index, 1);
+                            }
                         }
+
+                        // If we're just adding an association to a new target artifact, it's easy
 
                         // Now add the targetArtifact into our array of Artifact refs
                         updatedArtifactRefs.push(targetartifact.get('_ref'));
@@ -915,7 +957,7 @@ Ext.define('ChangesetMover', {
 
     _confirmDeleteChangeset: function(record, scope) {
 
-        // console.log('_confirmDeleteChangeset');
+        console.log('_confirmDeleteChangeset');
 
         var me = scope;
 
@@ -935,7 +977,7 @@ Ext.define('ChangesetMover', {
 
     _deleteChangeset: function(record, scope) {
 
-        // console.log('_deleteChangeset');
+        console.log('_deleteChangeset');
 
         var me = scope;
         var changesetOID = record.ObjectID;
