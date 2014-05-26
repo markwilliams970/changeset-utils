@@ -793,9 +793,25 @@ Ext.define('ChangesetMover', {
         var changesetOID = changesetrecord.ObjectID;
         var changesetArtifacts = me._changesetArtifactsByChangesetOid[changesetOID];
 
+        // We need to take different actions depending on how many
+        // artifacts our Changeset owns/associates to
+
+        // If the Changeset associates to only one Artifact, choose it and move onto the next step
         if (changesetArtifacts.length === 1) {
             me._selectedArtifact = changesetArtifacts[0];
-        } else {
+            me._selectTargetArtifactForChangesetMove(changesetrecord, scope);
+        }
+
+        // If the Changeset associates to no artifacts, just move on
+        // (We'll end up with a null me._selectedArtifact later, but we check for, and handle that)
+        else if (!changesetArtifacts) {
+            me._selectTargetArtifactForChangesetMove(changesetrecord, scope);
+        }
+
+        // Finally, if our Changeset associates to more than one Artifact, but we're wanting to move it
+        // We need to raise a selector so we know what we're moving _from_
+        // Once we've made the selection, move onto the next step
+        else {
             me._sourceArtifactChooserDialog = Ext.create('ChangesetMover.ChooseArtifactDialog', {
                 message: "Select Source Artifact to Dissociate",
                 confirmLabel: "Done",
