@@ -150,7 +150,6 @@ Ext.define('ChangesetMover.ChooseArtifactDialog', {
                 scope: this,
                 'select': function(combobox, records) {
                     this.selectedArtifact = records[0].get('value');
-                    console.log(this.selectedArtifact);
                 }
             }
         });

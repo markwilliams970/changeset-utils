@@ -79,7 +79,7 @@ Ext.define('ChangesetMover', {
 
     _buildUI: function() {
 
-        console.log('_buildUI');
+        // console.log('_buildUI');
 
         var me = this;
 
@@ -231,7 +231,7 @@ Ext.define('ChangesetMover', {
 
     _getHostName: function() {
 
-        console.log('_getHostName');
+        // console.log('_getHostName');
 
         testUrl = window.location.hostname || "rally1.rallydev.com";
         testUrlSplit = testUrl.split("/");
@@ -245,7 +245,7 @@ Ext.define('ChangesetMover', {
 
     _initializeDefaultDates: function() {
 
-        console.log('_initializeDefaultDates');
+        // console.log('_initializeDefaultDates');
 
         var me = this;
 
@@ -255,7 +255,7 @@ Ext.define('ChangesetMover', {
 
     _padIntegerToString: function(num, size) {
 
-        console.log('_padIntegerToString');
+        // console.log('_padIntegerToString');
         var numToPad = Math.abs(num);
 
         var paddedString = numToPad + "";
@@ -271,7 +271,7 @@ Ext.define('ChangesetMover', {
 
     _createStartDateChooserDialog: function() {
 
-        console.log('_createStartDateChooserDialog');
+        // console.log('_createStartDateChooserDialog');
 
         var me = this;
 
@@ -303,7 +303,7 @@ Ext.define('ChangesetMover', {
 
     _createEndDateChooserDialog: function() {
 
-        console.log('_createEndDateChooserDialog');
+        // console.log('_createEndDateChooserDialog');
 
         var me = this;
 
@@ -333,7 +333,7 @@ Ext.define('ChangesetMover', {
 
     _validateTimebox: function() {
 
-        console.log('_validateTimebox');
+        // console.log('_validateTimebox');
 
         var me = this;
 
@@ -382,7 +382,7 @@ Ext.define('ChangesetMover', {
 
     _dateToISOString: function(date, convertToUTC, stripTimePortion) {
 
-        console.log('_dateToISOString');
+        // console.log('_dateToISOString');
 
         if (stripTimePortion) {
             return Rally.util.DateTime.toIsoString( date, convertToUTC ).replace(/T[\W\w]*/,"");
@@ -393,7 +393,7 @@ Ext.define('ChangesetMover', {
 
     _getDateStringWithUTCOffset: function(dateString, hourString, minuteString) {
 
-        console.log('_getDateStringWithUTCOffset');
+        // console.log('_getDateStringWithUTCOffset');
 
         var me = this;
         var dateTimeSeparator     = "T";
@@ -408,13 +408,13 @@ Ext.define('ChangesetMover', {
     },
 
     _getUTCOffsetString: function() {
-        console.log('_getUTCOffsetString');
+        // console.log('_getUTCOffsetString');
         return this._padIntegerToString(parseInt(Ext.Date.format(new Date(), "Z"), 10)/3600, 2);
     },
 
     _startDateIsInFutureNotify: function() {
 
-        console.log('_startDateIsInFutureNotify');
+        // console.log('_startDateIsInFutureNotify');
         var me = this;
 
         if (me._startDateIsInFutureDialog) {
@@ -435,7 +435,7 @@ Ext.define('ChangesetMover', {
 
     _startDateIsGTEndDateNotify: function() {
 
-        console.log('_startDateIsGTEndDateNotify');
+        // console.log('_startDateIsGTEndDateNotify');
 
         var me = this;
 
@@ -457,9 +457,12 @@ Ext.define('ChangesetMover', {
 
    _hydrateData: function() {
 
-        console.log('_hydrateData');
+        // console.log('_hydrateData');
 
         var me = this;
+
+        // Set loading notifier
+        me.setLoading("Loading Changeset Data...");
 
         // Clear out any previous data
         me._artifactChangesetsByChangesetOid = {};
@@ -509,7 +512,7 @@ Ext.define('ChangesetMover', {
 
     _getChangesets: function(scope) {
 
-        console.log('_getArtifactChangesetCollection');
+        // console.log('_getArtifactChangesetCollection');
 
         var me = scope;
 
@@ -538,7 +541,7 @@ Ext.define('ChangesetMover', {
 
         var me = scope;
 
-        console.log('_hydrateChangesetArtifacts');
+        // console.log('_hydrateChangesetArtifacts');
 
         var deferred = Ext.create('Deft.Deferred');
 
@@ -575,7 +578,7 @@ Ext.define('ChangesetMover', {
 
 
     _getHashLength: function(hash) {
-        console.log('_getHashLength');
+        // console.log('_getHashLength');
 
         var size = 0, key;
         for (key in hash) {
@@ -586,7 +589,7 @@ Ext.define('ChangesetMover', {
 
     _getChangesetArtifactsCollection: function(scope, type) {
 
-        console.log('_getChangesetArtifactsCollection');
+        // console.log('_getChangesetArtifactsCollection');
 
         var me = scope;
         var changesetsByChangesetOID = me._artifactChangesetsByChangesetOid;
@@ -615,7 +618,7 @@ Ext.define('ChangesetMover', {
 
         var me = scope;
 
-        console.log('_hydrateChangesetArtifacts');
+        // console.log('_hydrateChangesetArtifacts');
 
         var deferred = Ext.create('Deft.Deferred');
 
@@ -654,7 +657,7 @@ Ext.define('ChangesetMover', {
 
     _makeGrids: function(scope) {
 
-        console.log('_makeGrids');
+        // console.log('_makeGrids');
         var me = scope;
         me._makeChangesetGrid(me);
 
@@ -662,7 +665,7 @@ Ext.define('ChangesetMover', {
 
     _makeChangesetGrid: function(scope) {
 
-        console.log('_makeChangesetGrid');
+        // console.log('_makeChangesetGrid');
 
         var me = scope;
 
@@ -782,11 +785,12 @@ Ext.define('ChangesetMover', {
 
         me.down('#gridContainer').add(me._changesetGrid);
         me._changesetGrid.reconfigure(gridStore);
+        me.setLoading(false);
     },
 
     _selectSourceArtifactToDisassociate: function(changesetrecord, scope) {
 
-        console.log('_selectSourceArtifactToDisassociate');
+        // console.log('_selectSourceArtifactToDisassociate');
         var me = scope;
 
         var changesetOID = changesetrecord.ObjectID;
@@ -828,7 +832,7 @@ Ext.define('ChangesetMover', {
 
     _selectTargetArtifactForChangesetMove: function(changesetrecord, scope) {
 
-        console.log('_selectTargetArtifactForChangesetMove');
+        // console.log('_selectTargetArtifactForChangesetMove');
         var me = scope;
 
         me._targetArtifactChooserDialog = Ext.create('Rally.ui.dialog.ChooserDialog', {
@@ -847,7 +851,7 @@ Ext.define('ChangesetMover', {
 
     _createMoveChangesetAttributesDialog: function(sourcechangeset, targetartifact, scope) {
 
-        console.log('_createMoveChangesetAttributesDialog');
+        // console.log('_createMoveChangesetAttributesDialog');
 
         var me = scope;
 
@@ -870,7 +874,7 @@ Ext.define('ChangesetMover', {
 
     _moveChangeset: function(sourcechangeset, targetartifact, newcommitmessage, scope) {
 
-        console.log('_moveChangeset');
+        // console.log('_moveChangeset');
 
         var me = scope;
         var changesetOID = sourcechangeset.ObjectID;
@@ -972,7 +976,7 @@ Ext.define('ChangesetMover', {
 
     _confirmDeleteChangeset: function(record, scope) {
 
-        console.log('_confirmDeleteChangeset');
+        // console.log('_confirmDeleteChangeset');
 
         var me = scope;
 
@@ -992,7 +996,7 @@ Ext.define('ChangesetMover', {
 
     _deleteChangeset: function(record, scope) {
 
-        console.log('_deleteChangeset');
+        // console.log('_deleteChangeset');
 
         var me = scope;
         var changesetOID = record.ObjectID;

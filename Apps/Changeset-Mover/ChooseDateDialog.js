@@ -164,7 +164,6 @@ Ext.define('ChangesetMover.ChooseDateDialog', {
             items: [{
                 xtype: 'datepicker',
                 handler: function(picker, date) {
-                    console.log(date);
                     me.selectedDate = date;
                 }
             }]
