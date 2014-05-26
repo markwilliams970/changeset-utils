@@ -1,4 +1,4 @@
-changeset-utils
+Artifact-Changeset-Helper
 =========================
 
 ## Overview
@@ -6,7 +6,7 @@ changeset-utils
 
 ## License
 
-AppTemplate is released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
+This App is released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
 
 ##Documentation for SDK
 
