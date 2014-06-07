@@ -14,7 +14,7 @@ Ext.define('ChangesetMover.ChooseDateDialog', {
         description: 'dialog shown'
     },
 
-    width: 350,
+    width: 220,
     closable: true,
     autoShow: true,
     cls: 'rally-confirm-dialog',
