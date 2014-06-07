@@ -570,10 +570,17 @@ Ext.define('ArtifactChangesetHelper', {
                                 artifactType = "userstory";
                             }
                             var artifactLabel = artifactFormattedID + ": " + artifactName;
-                            artifactsHtml.push(
-                                '<a href="' + me._rallyServer + '/#/detail/' + artifactType + '/' +
-                                artifactObjectID + '">' + artifactLabel + '</a>'
-                            );
+
+                            var linkTemplate = new Ext.Template('<a href="{rallyServer}/#/detail/{artifactType}/{artifactOID}" target="_blank">{artifactLabel}</a>');
+                            var artifactHtml = linkTemplate.apply({
+                                rallyServer: me._rallyServer,
+                                artifactType: artifactType,
+                                artifactOID: artifactObjectID,
+                                artifactLabel: artifactLabel
+                            });
+
+                            artifactsHtml.push(artifactHtml);
+
                         });
                         return artifactsHtml.join('<br/> ');
                     },
